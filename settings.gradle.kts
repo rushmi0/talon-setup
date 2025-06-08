@@ -5,4 +5,4 @@ pluginManagement {
     }
 }
 
-rootProject.name = "kotlin-app-cli"
+rootProject.name = "talon-cli"

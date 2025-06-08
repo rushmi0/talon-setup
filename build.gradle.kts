@@ -1,9 +1,7 @@
-import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
-
-
 plugins {
     alias(libs.plugins.kotlinMultiplatform)
     alias(libs.plugins.kotlinxSerialization)
+    id("de.jensklingenberg.ktorfit") version "2.5.1"
 }
 
 group = "apps.cli"
@@ -36,11 +34,16 @@ kotlin {
         }
     }
 
-
+    val ktorVersion = "3.1.3"
+    val ktorfitVersion = "2.5.1"
 
     sourceSets {
         val commonMain by getting {
             dependencies {
+                implementation("io.ktor:ktor-client-core:${ktorVersion}")
+                implementation("io.ktor:ktor-client-cio:${ktorVersion}")
+                implementation("io.ktor:ktor-client-curl:${ktorVersion}")
+                implementation("de.jensklingenberg.ktorfit:ktorfit-lib:${ktorfitVersion}")
                 implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.10.2")
                 implementation("org.jetbrains.kotlinx:kotlinx-io-core:0.7.0")
                 implementation("org.jetbrains.kotlinx:kotlinx-cli:0.3.6")
