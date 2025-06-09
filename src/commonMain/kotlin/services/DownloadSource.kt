@@ -28,7 +28,7 @@ object FileDownloader {
 
     @OptIn(ExperimentalForeignApi::class)
     suspend fun downloadFileNative(locationPath: String) {
-        val url = "https://dev.talon.jp/downloads/products/index.php?file=ProductNew_6_2_8.zip"
+        val url = "https://repo1.maven.org/maven2/fish/payara/distributions/payara-ml/6.2024.8/payara-ml-6.2024.8.zip"
 
         val response: HttpResponse = client.get(url)
         val bytes: ByteArray = response.bodyAsChannel().readRemaining().readByteArray()
