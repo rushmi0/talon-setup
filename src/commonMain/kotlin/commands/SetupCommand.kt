@@ -4,7 +4,7 @@ import kotlinx.cli.ExperimentalCli
 import kotlinx.cli.Subcommand
 import kotlinx.coroutines.runBlocking
 import services.Environment
-import services.FileDownloader
+import services.DownloadSource
 
 @OptIn(ExperimentalCli::class)
 class SetupCommand : Subcommand("-i", "Initialize environment") {
@@ -20,7 +20,7 @@ class SetupCommand : Subcommand("-i", "Initialize environment") {
         )
 
         runBlocking {
-            FileDownloader.downloadFileNative(Environment.talonDirPath)
+            DownloadSource.downloadFileNative(Environment.talonDirPath)
         }
     }
 
