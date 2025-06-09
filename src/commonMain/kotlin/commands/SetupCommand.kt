@@ -22,9 +22,9 @@ class SetupCommand : Subcommand("-i", "Initialize environment") {
             }
         )
 
-        /*runBlocking {
-            FileDownloader.downloadFileNative()
-        }*/
+        runBlocking {
+            FileDownloader.downloadFileNative(Environment.talonDirPath)
+        }
     }
 
 

@@ -18,7 +18,11 @@ import platform.posix.open as posixOpen
 
 object FileDownloader {
 
-    private val client = HttpClient(Curl)
+    private val client = HttpClient(Curl) {
+        engine {
+            sslVerify = false
+        }
+    }
 
 
     @OptIn(ExperimentalForeignApi::class)
