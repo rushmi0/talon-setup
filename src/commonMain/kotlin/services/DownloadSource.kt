@@ -1,50 +1,60 @@
 package services
 
 import io.ktor.client.*
-import io.ktor.client.call.*
 import io.ktor.client.engine.curl.Curl
 import io.ktor.client.request.*
+import io.ktor.client.statement.HttpResponse
 import io.ktor.client.statement.bodyAsChannel
-import io.ktor.http.ContentDisposition.Companion.File
-import io.ktor.utils.io.core.use
-import io.ktor.utils.io.readAvailable
+import io.ktor.utils.io.core.readBytes
+import io.ktor.utils.io.readRemaining
+import kotlinx.io.files.FileSystem
 import kotlinx.io.files.Path
-import services.Environment.talonDirPath
+import platform.posix.write
+import kotlinx.cinterop.*
+import kotlinx.io.readByteArray
+import platform.posix.*
+import platform.posix.open as posixOpen
 
 
 object FileDownloader {
 
-    private val client = HttpClient(Curl) {
-        engine {
-            sslVerify = false
+    private val client = HttpClient(Curl)
+
+
+    @OptIn(ExperimentalForeignApi::class)
+    suspend fun downloadFileNative(locationPath: String) {
+        val url = "https://dev.talon.jp/downloads/products/index.php?file=ProductNew_6_2_8.zip"
+
+        val response: HttpResponse = client.get(url)
+        val bytes: ByteArray = response.bodyAsChannel().readRemaining().readByteArray()
+
+
+        // Open file with write-only, create if not exists, truncate if exists, permission 0644
+        val fd = memScoped {
+            val cPathPtr = locationPath.cstr.getPointer(this).toString()
+            posixOpen(cPathPtr, O_WRONLY or O_CREAT or O_TRUNC, 0b110100100)
         }
-    }
 
-    private val urls = listOf(
-        "https://repo1.maven.org/maven2/fish/payara/distributions/payara-ml/6.2024.8/payara-ml-6.2024.8.zip",
-        "https://dev.talon.jp/downloads/products/index.php?file=ProductNew_6_2_8.zip"
-    )
+        if (fd == -1) {
+            perror("❌ Failed to open file")
+            return
+        }
 
-    /*suspend fun downloadFile(url: String): Result<Unit> = runCatching {
-        val response = client.get(url).bodyAsChannel()
-        val fileName = url.substringAfterLast("/")
-        val filePath = Path(talonDirPath).resolve(fileName)
-
-        // Open file sink (write)
-        FileSink(filePath).use { sink ->
-            val buffer = ByteArray(8 * 1024)
-            while (!response.isClosedForRead) {
-                val read = response.readAvailable(buffer, 0, buffer.size)
-                if (read > 0) {
-                    sink.write(buffer, 0, read)
-                }
+        // Write bytes to file
+        bytes.usePinned { pinned ->
+            val written = write(fd, pinned.addressOf(0), bytes.size.convert())
+            if (written.toLong() == -1L) {
+                perror("❌ Failed to write to file")
+            } else {
+                println("✅ Wrote $written bytes to $locationPath")
             }
         }
 
-        println("Downloaded: $filePath")
-    }*/
+        // Close file
+        close(fd)
 
-    /*suspend fun downloadAll(): List<Result<Unit>> {
-        return urls.map { downloadFile(it) }
-    }*/
+        client.close()
+    }
+
+
 }
