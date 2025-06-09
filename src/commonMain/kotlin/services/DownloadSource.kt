@@ -5,6 +5,7 @@ import io.ktor.client.engine.curl.Curl
 import io.ktor.client.request.*
 import io.ktor.client.statement.HttpResponse
 import io.ktor.client.statement.bodyAsChannel
+import io.ktor.http.Url
 import io.ktor.utils.io.core.readBytes
 import io.ktor.utils.io.readRemaining
 import kotlinx.io.files.FileSystem
@@ -31,11 +32,14 @@ object FileDownloader {
 
         val response: HttpResponse = client.get(url)
         val bytes: ByteArray = response.bodyAsChannel().readRemaining().readByteArray()
+        val uri = Url(url)
+        val fileName = uri.parameters["file"]
 
+        println("Filename from URL: $fileName")
 
         // Open file with write-only, create if not exists, truncate if exists, permission 0644
         val fd = memScoped {
-            val cPathPtr = locationPath.cstr.getPointer(this).toString()
+            val cPathPtr = "$locationPath\\$fileName".cstr.getPointer(this).toString()
             posixOpen(cPathPtr, O_WRONLY or O_CREAT or O_TRUNC, 0b110100100)
         }
 
