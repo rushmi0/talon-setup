@@ -21,7 +21,12 @@ object FileDownloader {
 
     @OptIn(ExperimentalForeignApi::class)
     fun saveToFile(fileName: String, path: String, data: ByteArray) {
-        val file = fopen("$path\\$fileName", "wb")
+
+        // ถ้า path ลงท้ายด้วย / หรือ \ แล้ว ก็เอา path กับ fileName มาต่อกันตรง ๆ
+        // ถ้าไม่ ก็เติม "/" เข้าไปเลย (ใช้ / ได้ทั้งบน Unix และ Windows)
+        val separator = if (path.endsWith('/') || path.endsWith('\\')) "" else "/"
+
+        val file = fopen("$path$separator$fileName", "wb")
         if (file == null) {
             perror("Failed to open file")
             return
