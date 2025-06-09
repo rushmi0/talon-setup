@@ -9,9 +9,6 @@ import services.FileDownloader
 @OptIn(ExperimentalCli::class)
 class SetupCommand : Subcommand("-i", "Initialize environment") {
 
-
-
-
     override fun execute() {
         Environment.initDir().fold(
             onSuccess = { message ->

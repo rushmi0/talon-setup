@@ -20,15 +20,20 @@ object FileDownloader {
     }
 
     @OptIn(ExperimentalForeignApi::class)
-    fun saveToFile(path: String, data: ByteArray) {
-        val file = fopen(path, "wb")
+    fun saveToFile(fileName: String, path: String, data: ByteArray) {
+        val file = fopen("$path\\$fileName", "wb")
         if (file == null) {
             perror("Failed to open file")
             return
         }
 
         data.usePinned { pinned ->
-            fwrite(pinned.addressOf(0), 1.convert(), data.size.convert(), file)
+            fwrite(
+                pinned.addressOf(0),
+                1.convert(),
+                data.size.convert(),
+                file
+            )
         }
 
         fclose(file)
@@ -46,9 +51,7 @@ object FileDownloader {
 
         println("Filename from URL: $fileName")
 
-        val fullPath = "$locationPath\\$fileName"
-
-        saveToFile(fileName, bytes)
+        saveToFile(fileName, locationPath, bytes)
 
     }
 
