@@ -36,8 +36,6 @@ kotlin {
     }
 
     val ktorVersion = "3.1.3"
-    val ktorfitVersion = "2.5.1"
-
     sourceSets {
         val commonMain by getting {
             dependencies {

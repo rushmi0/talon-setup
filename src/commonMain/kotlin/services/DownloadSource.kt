@@ -6,16 +6,10 @@ import io.ktor.client.request.*
 import io.ktor.client.statement.HttpResponse
 import io.ktor.client.statement.bodyAsChannel
 import io.ktor.http.Url
-import io.ktor.utils.io.core.readBytes
 import io.ktor.utils.io.readRemaining
-import kotlinx.io.files.FileSystem
-import kotlinx.io.files.Path
-import platform.posix.write
 import kotlinx.cinterop.*
 import kotlinx.io.readByteArray
 import platform.posix.*
-import platform.posix.open as posixOpen
-
 
 object FileDownloader {
 
@@ -23,6 +17,21 @@ object FileDownloader {
         engine {
             sslVerify = false
         }
+    }
+
+    @OptIn(ExperimentalForeignApi::class)
+    fun saveToFile(path: String, data: ByteArray) {
+        val file = fopen(path, "wb")
+        if (file == null) {
+            perror("Failed to open file")
+            return
+        }
+
+        data.usePinned { pinned ->
+            fwrite(pinned.addressOf(0), 1.convert(), data.size.convert(), file)
+        }
+
+        fclose(file)
     }
 
 
@@ -33,35 +42,14 @@ object FileDownloader {
         val response: HttpResponse = client.get(url)
         val bytes: ByteArray = response.bodyAsChannel().readRemaining().readByteArray()
         val uri = Url(url)
-        val fileName = uri.parameters["file"]
+        val fileName = uri.rawSegments.last()
 
         println("Filename from URL: $fileName")
 
-        // Open file with write-only, create if not exists, truncate if exists, permission 0644
-        val fd = memScoped {
-            val cPathPtr = "$locationPath\\$fileName".cstr.getPointer(this).toString()
-            posixOpen(cPathPtr, O_WRONLY or O_CREAT or O_TRUNC, 0b110100100)
-        }
+        val fullPath = "$locationPath\\$fileName"
 
-        if (fd == -1) {
-            perror("❌ Failed to open file")
-            return
-        }
+        saveToFile(fileName, bytes)
 
-        // Write bytes to file
-        bytes.usePinned { pinned ->
-            val written = write(fd, pinned.addressOf(0), bytes.size.convert())
-            if (written.toLong() == -1L) {
-                perror("❌ Failed to write to file")
-            } else {
-                println("✅ Wrote $written bytes to $locationPath")
-            }
-        }
-
-        // Close file
-        close(fd)
-
-        client.close()
     }
 
 
